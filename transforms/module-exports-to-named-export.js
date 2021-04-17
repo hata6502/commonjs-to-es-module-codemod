@@ -41,7 +41,7 @@ function transformer(file, api, options) {
     logger.log(`${nodes.length} nodes will be transformed`);
 
     // ----------------------------------------------------------------- REPLACE
-    return nodes
+    const source = nodes
         .replaceWith((path) => {
             const node = path.node;
             // Identifier node
@@ -55,6 +55,33 @@ function transformer(file, api, options) {
             // https://babeljs.io/docs/en/babel-types#exportnameddeclaration
             const declaration = j.variableDeclaration("const", [j.variableDeclarator(id, init)]);
             return j.exportNamedDeclaration(declaration);
+        })
+        .toSource();
+
+    return j(source)
+        .find(j.ExpressionStatement, {
+            expression: {
+                left: {
+                    object: {
+                        name: "module"
+                    },
+                    property: {
+                        name: "exports"
+                    }
+                },
+                right: {
+                    type: "ObjectExpression"
+                },
+                operator: "="
+            }
+        })
+        .filter(isTopNode)
+        .replaceWith((path) => {
+            const exportSpecifiers = path.node.expression.right.properties.map((property) => {
+                console.log(JSON.stringify(property, null, "  "));
+                return j.exportSpecifier(j.identifier("default"), j.identifier(elem.key.name));
+            });
+            return j.exportNamedDeclaration(null, exportSpecifiers);
         })
         .toSource();
 }
