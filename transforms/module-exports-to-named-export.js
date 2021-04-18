@@ -47,10 +47,10 @@ function transformer(file, api, options) {
             // Identifier node
             const id = node.expression.left.property;
             const init = node.expression.right;
-            // module.export.b = a
-            // → export { a as b }
+            // module.export.a = a
+            // → export { a }
             if (id.type === "Identifier" && init.type === "Identifier") {
-                return j.exportNamedDeclaration(null, [j.exportSpecifier(init, id)]);
+                return j.exportNamedDeclaration(null, [j.exportSpecifier(id, init)]);
             }
             // https://babeljs.io/docs/en/babel-types#exportnameddeclaration
             const declaration = j.variableDeclaration("const", [j.variableDeclarator(id, init)]);
